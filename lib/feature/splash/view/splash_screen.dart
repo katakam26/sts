@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../services/auth_wrapper.dart';
@@ -74,42 +75,49 @@ class _SplashScreenState extends State<SplashScreen>
     return BlocListener<SplashBloc, SplashState>(
       listenWhen: (previous, current) => current is SplashCompleted,
       listener: (context, state) => _goToAuth(),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        // Light status bar icons, since the brand fills the screen.
+        value: SystemUiOverlayStyle.light.copyWith(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+        ),
+        child: Scaffold(
+        backgroundColor: AppColors.primary,
         body: GestureDetector(
           // Tapping anywhere skips the rest of the intro.
           onTap: () => context.read<SplashBloc>().add(SkipSplashEvent()),
           behavior: HitTestBehavior.opaque,
           child: Container(
             decoration: const BoxDecoration(
+              // Full-bleed brand gradient.
               gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
                 colors: [
-                  Colors.white,
-                  AppColors.background,
-                  Color(0xFFFFF1EA), // warm tint of AppColors.primary
+                  Color(0xFFFF8C5A), // AppColors.primaryLight
+                  AppColors.primary,
+                  Color(0xFFE0521F), // deeper shade of primary
                 ],
-                stops: [0.0, 0.55, 1.0],
+                stops: [0.0, 0.5, 1.0],
               ),
             ),
             child: Stack(
               children: [
-                // Decorative brand blobs behind the content.
+                // Decorative light blooms over the brand field.
                 Positioned(
                   top: -screenHeight * 0.08,
                   right: -screenWidth * 0.18,
                   child: _BrandBlob(
-                    size: screenWidth * 0.6,
-                    color: AppColors.primary.withValues(alpha: 0.10),
+                    size: screenWidth * 0.7,
+                    color: Colors.white.withValues(alpha: 0.10),
                   ),
                 ),
                 Positioned(
                   bottom: -screenHeight * 0.05,
                   left: -screenWidth * 0.22,
                   child: _BrandBlob(
-                    size: screenWidth * 0.55,
-                    color: AppColors.secondary.withValues(alpha: 0.45),
+                    size: screenWidth * 0.6,
+                    color: Colors.white.withValues(alpha: 0.08),
                   ),
                 ),
                 SafeArea(
@@ -157,6 +165,7 @@ class _SplashScreenState extends State<SplashScreen>
             ),
           ),
         ),
+      ),
       ),
     );
   }

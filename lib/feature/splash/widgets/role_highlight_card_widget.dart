@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../../utils/app_colors.dart';
 import '../../../utils/app_font_size.dart';
 import '../../../utils/app_font_weight.dart';
 import '../../../widgets/shimmer_effect.dart';
 import '../models/splash_role.dart';
 
-/// A single audience card (Students / Teachers / Drivers) that slides up into
-/// place, then keeps a soft shimmer running across its illustrative icon tile.
+/// A single audience card (Students / Teachers / Drivers). Frosted glass over
+/// the brand gradient: it slides up into place, then keeps a white shimmer
+/// running across its illustrative icon tile.
 class RoleHighlightCardWidget extends StatelessWidget {
   final SplashRole role;
   final Animation<double> animation;
@@ -33,46 +33,30 @@ class RoleHighlightCardWidget extends StatelessWidget {
           end: Offset.zero,
         ).animate(animation),
         child: Container(
-          margin: EdgeInsets.only(bottom: screenHeight * 0.016),
+          margin: EdgeInsets.only(bottom: screenHeight * 0.014),
           padding: EdgeInsets.symmetric(
             horizontal: screenWidth * 0.04,
-            vertical: screenHeight * 0.018,
+            vertical: screenHeight * 0.016,
           ),
           decoration: BoxDecoration(
-            color: AppColors.cardBackground,
+            color: Colors.white.withValues(alpha: 0.14),
             borderRadius: BorderRadius.circular(screenWidth * 0.045),
-            border: Border.all(color: AppColors.cardBorder),
-            boxShadow: [
-              BoxShadow(
-                color: role.accent.withValues(alpha: 0.10),
-                blurRadius: screenWidth * 0.05,
-                offset: const Offset(0, 6),
-              ),
-            ],
+            border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
           ),
           child: Row(
             children: [
-              ShimmerEffect(
-                baseColor: role.accent,
-                highlightColor: Colors.white,
+              ShimmerEffect.onBrand(
                 delay: shimmerDelay,
                 child: Container(
-                  padding: EdgeInsets.all(screenWidth * 0.032),
+                  padding: EdgeInsets.all(screenWidth * 0.03),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        role.accent.withValues(alpha: 0.20),
-                        role.accent.withValues(alpha: 0.06),
-                      ],
-                    ),
+                    color: Colors.white.withValues(alpha: 0.22),
                     borderRadius: BorderRadius.circular(screenWidth * 0.035),
                   ),
                   child: Icon(
                     role.icon,
-                    color: role.accent,
-                    size: screenWidth * 0.07,
+                    color: Colors.white,
+                    size: screenWidth * 0.065,
                   ),
                 ),
               ),
@@ -86,7 +70,7 @@ class RoleHighlightCardWidget extends StatelessWidget {
                       style: TextStyle(
                         fontSize: AppFontSize.h6(context),
                         fontWeight: AppFontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: Colors.white,
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.004),
@@ -95,7 +79,7 @@ class RoleHighlightCardWidget extends StatelessWidget {
                       style: TextStyle(
                         fontSize: AppFontSize.caption(context),
                         fontWeight: AppFontWeight.regular,
-                        color: AppColors.textSecondary,
+                        color: Colors.white.withValues(alpha: 0.85),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

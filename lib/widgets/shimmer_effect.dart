@@ -20,20 +20,31 @@ class ShimmerEffect extends StatefulWidget {
     required this.child,
     this.baseColor = const Color(0xFFE7E7EC),
     this.highlightColor = Colors.white,
-    this.duration = const Duration(milliseconds: 1600),
+    this.duration = const Duration(milliseconds: 2200),
     this.delay = Duration.zero,
     this.enabled = true,
   });
 
-  /// Brand coloured sweep, for the logo and headline text.
+  /// Brand coloured sweep, for orange content on a light background.
   const ShimmerEffect.brand({
     super.key,
     required this.child,
-    this.duration = const Duration(milliseconds: 1800),
+    this.duration = const Duration(milliseconds: 2200),
     this.delay = Duration.zero,
     this.enabled = true,
   })  : baseColor = AppColors.primary,
         highlightColor = AppColors.primaryLight;
+
+  /// White sweep for content sitting on the brand gradient. The base is held
+  /// off pure white so the passing highlight actually reads as a highlight.
+  const ShimmerEffect.onBrand({
+    super.key,
+    required this.child,
+    this.duration = const Duration(milliseconds: 2200),
+    this.delay = Duration.zero,
+    this.enabled = true,
+  })  : baseColor = const Color(0xB3FFFFFF), // white @ 70%
+        highlightColor = Colors.white;
 
   @override
   State<ShimmerEffect> createState() => _ShimmerEffectState();
@@ -95,7 +106,8 @@ class _ShimmerEffectState extends State<ShimmerEffect>
                 widget.baseColor,
                 widget.baseColor,
               ],
-              stops: const [0.0, 0.35, 0.5, 0.65, 1.0],
+              // Wide highlight band so the sweep is unmistakable.
+              stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
               transform: _SlidingGradientTransform(_controller.value),
             ).createShader(bounds);
           },
@@ -115,8 +127,10 @@ class _SlidingGradientTransform extends GradientTransform {
 
   @override
   Matrix4 transform(Rect bounds, {TextDirection? textDirection}) {
+    // Travel one width either side. A wider throw parks the highlight
+    // off-screen for most of the cycle, which is what made it easy to miss.
     return Matrix4.translationValues(
-      bounds.width * (progress * 3 - 1.5),
+      bounds.width * (progress * 2 - 1),
       0.0,
       0.0,
     );
