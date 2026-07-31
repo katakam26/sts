@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sts/services/auth_wrapper.dart';
 import 'package:sts/utils/app_colors.dart';
 import 'package:sts/services/api_services.dart';
 import 'package:sts/utils/secure_storage.dart';
 
 import 'feature/login/bloc/login_bloc.dart';
 import 'feature/login/repository/login_repository.dart';
+import 'feature/splash/bloc/splash_bloc.dart';
+import 'feature/splash/view/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,6 +35,9 @@ class MyApp extends StatelessWidget {
               secureStorageService: context.read<SecureStorageService>(),
             ),
           ),
+          BlocProvider(
+            create: (context) => SplashBloc(),
+          ),
         ],
         child: MaterialApp(
           title: 'STS App',
@@ -42,7 +46,7 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
           ),
           debugShowCheckedModeBanner: false,
-          home: const AuthWrapper(),
+          home: const SplashScreen(),
         ),
       ),
     );

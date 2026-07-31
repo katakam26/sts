@@ -23,6 +23,10 @@ class _MainBottomNavState extends State<MainBottomNav>
     with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
 
+  // ── Carousel paging between tabs ───────────────────────────────
+  late final PageController _pageController;
+  static const Duration _pageSlideDuration = Duration(milliseconds: 350);
+
   // ── Nav bar visibility ─────────────────────────────────────────
   late AnimationController _navBarAnimController;
   late Animation<Offset> _navBarSlide;
@@ -33,6 +37,7 @@ class _MainBottomNavState extends State<MainBottomNav>
     super.initState();
     _currentIndex = widget.initialIndex;
     _buildScreens();
+    _pageController = PageController(initialPage: _currentIndex);
 
     _navBarAnimController = AnimationController(
       vsync: this,
@@ -53,6 +58,7 @@ class _MainBottomNavState extends State<MainBottomNav>
 
   @override
   void dispose() {
+    _pageController.dispose();
     _navBarAnimController.dispose();
     super.dispose();
   }
@@ -83,10 +89,20 @@ class _MainBottomNavState extends State<MainBottomNav>
     // Always show nav bar when tapping a tab
     _showNavBar();
 
-    setState(() {
-      _currentIndex = index;
-      _buildScreens();
-    });
+    if (index == _currentIndex) return;
+
+    // Slide across to the tab instead of swapping it in instantly.
+    _pageController.animateToPage(
+      index,
+      duration: _pageSlideDuration,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  // Fired by both a tab tap and a manual swipe.
+  void _onPageChanged(int index) {
+    _showNavBar();
+    setState(() => _currentIndex = index);
   }
 
   late List<Widget> _screens;
@@ -225,7 +241,10 @@ class _MainBottomNavState extends State<MainBottomNav>
             //    any child screen without passing anything to them ──────
             NotificationListener<ScrollNotification>(
               onNotification: (notification) {
-                if (notification is UserScrollNotification) {
+                // Ignore the PageView's own horizontal scrolls, otherwise
+                // swiping between tabs would toggle the nav bar.
+                if (notification is UserScrollNotification &&
+                    notification.metrics.axis == Axis.vertical) {
                   final direction = notification.direction;
                   if (direction == ScrollDirection.reverse) {
                     _hideNavBar(); // scrolling down → hide
@@ -235,9 +254,17 @@ class _MainBottomNavState extends State<MainBottomNav>
                 }
                 return false; // don't absorb the notification
               },
-              child: IndexedStack(
-                index: _currentIndex,
-                children: _screens,
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: _onPageChanged,
+                physics: const BouncingScrollPhysics(),
+                itemCount: _screens.length,
+                itemBuilder: (context, index) => _CarouselPage(
+                  controller: _pageController,
+                  index: index,
+                  initialPage: widget.initialIndex,
+                  child: _screens[index],
+                ),
               ),
             ),
             // ── Animated floating nav bar ───────────────────────────
@@ -316,6 +343,56 @@ class _MainBottomNavState extends State<MainBottomNav>
           ],
         ),
       ),
+    );
+  }
+}
+/// Wraps a tab so it stays alive across swipes and picks up a carousel-style
+/// depth effect: pages scale down and fade slightly as they slide away.
+class _CarouselPage extends StatefulWidget {
+  final PageController controller;
+  final int index;
+  final int initialPage;
+  final Widget child;
+
+  const _CarouselPage({
+    required this.controller,
+    required this.index,
+    required this.initialPage,
+    required this.child,
+  });
+
+  @override
+  State<_CarouselPage> createState() => _CarouselPageState();
+}
+
+class _CarouselPageState extends State<_CarouselPage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    return AnimatedBuilder(
+      animation: widget.controller,
+      builder: (context, child) {
+        // `page` is null until the controller is attached to a viewport.
+        final page = widget.controller.hasClients &&
+                widget.controller.position.haveDimensions
+            ? widget.controller.page ?? widget.initialPage.toDouble()
+            : widget.initialPage.toDouble();
+
+        final distance = (page - widget.index).abs().clamp(0.0, 1.0);
+        final scale = 1 - (distance * 0.08);
+        final opacity = 1 - (distance * 0.35);
+
+        return Opacity(
+          opacity: opacity,
+          child: Transform.scale(scale: scale, child: child),
+        );
+      },
+      child: widget.child,
     );
   }
 }

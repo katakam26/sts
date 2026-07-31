@@ -6,16 +6,16 @@ import '../../../utils/app_font_weight.dart';
 
 class QuickActionCardWidget extends StatelessWidget {
   final IconData icon;
-  final Color iconColor;
-  final Color iconBgColor;
+  final Color accent;
   final String label;
+  final VoidCallback? onTap;
 
   const QuickActionCardWidget({
     super.key,
     required this.icon,
-    required this.iconColor,
-    required this.iconBgColor,
+    required this.accent,
     required this.label,
+    this.onTap,
   });
 
   @override
@@ -24,7 +24,7 @@ class QuickActionCardWidget extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return InkWell(
-      onTap: () {},
+      onTap: onTap ?? () {},
       borderRadius: BorderRadius.circular(screenWidth * 0.03),
       child: Container(
         padding: EdgeInsets.symmetric(
@@ -35,20 +35,36 @@ class QuickActionCardWidget extends StatelessWidget {
           color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(screenWidth * 0.03),
           border: Border.all(color: AppColors.cardBorder),
+          boxShadow: [
+            BoxShadow(
+              color: accent.withValues(alpha: 0.08),
+              blurRadius: screenWidth * 0.035,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Illustrative icon tile: soft accent gradient behind a rounded glyph.
             Container(
-              padding: EdgeInsets.all(screenWidth * 0.025),
+              padding: EdgeInsets.all(screenWidth * 0.028),
               decoration: BoxDecoration(
-                color: iconBgColor,
-                borderRadius: BorderRadius.circular(screenWidth * 0.02),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    accent.withValues(alpha: 0.22),
+                    accent.withValues(alpha: 0.07),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(screenWidth * 0.03),
+                border: Border.all(color: accent.withValues(alpha: 0.18)),
               ),
               child: Icon(
                 icon,
-                color: iconColor,
-                size: screenWidth * 0.06,
+                color: accent,
+                size: screenWidth * 0.062,
               ),
             ),
             SizedBox(height: screenHeight * 0.008),
