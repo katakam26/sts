@@ -307,7 +307,7 @@ class _MainBottomNavState extends State<MainBottomNav>
       },
       child: Scaffold(
         backgroundColor: AppColors.scaffoldBackground,
-        drawer: const AppSidebar(),
+        drawer: AppSidebar(onSelectDestination: _onItemTapped),
         body: Stack(
           children: [
             // ── NotificationListener intercepts ALL scroll events from
