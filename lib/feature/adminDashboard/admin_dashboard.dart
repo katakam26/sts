@@ -5,7 +5,7 @@ import 'package:sts/feature/adminDashboard/widgets/fleet_status_section_widget.d
 import 'package:sts/feature/adminDashboard/widgets/my_children_section_widget.dart';
 import 'package:sts/feature/adminDashboard/widgets/quick_actions_section_widget.dart';
 import 'package:sts/feature/adminDashboard/widgets/sdmin_feader_widget.dart';
-import 'package:sts/feature/adminDashboard/widgets/stats_row_widget.dart';
+import 'package:sts/feature/adminDashboard/widgets/stats_carousel_widget.dart';
 import 'package:sts/feature/adminDashboard/widgets/student_statistics_section_widget.dart';
 import 'package:sts/feature/adminDashboard/widgets/vehicle_status_section_widget.dart';
 
@@ -39,8 +39,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
               SizedBox(height: screenHeight * 0.025),
 
-              // Stats Row
-              const StatsRowWidget(),
+              // Stats Carousel
+              const StatsCarouselWidget(),
 
               SizedBox(height: screenHeight * 0.025),
 
