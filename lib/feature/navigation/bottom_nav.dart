@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:io';
 
 import '../adminDashboard/admin_dashboard.dart';
@@ -26,6 +26,17 @@ class _MainBottomNavState extends State<MainBottomNav>
   // ── Carousel paging between tabs ───────────────────────────────
   late final PageController _pageController;
   static const Duration _pageSlideDuration = Duration(milliseconds: 350);
+
+  // Lucide glyphs, one per destination, in the same order as _screens.
+  // Names map to the lucide slugs: layout-dashboard, route, users,
+  // clipboard-check, circle-user.
+  static const List<IconData> _navIcons = [
+    LucideIcons.layoutDashboard,
+    LucideIcons.route,
+    LucideIcons.users,
+    LucideIcons.clipboardCheck,
+    LucideIcons.circleUser,
+  ];
 
   // ── Nav bar visibility ─────────────────────────────────────────
   late AnimationController _navBarAnimController;
@@ -148,37 +159,100 @@ class _MainBottomNavState extends State<MainBottomNav>
         false;
   }
 
+  // Live page position, so the pill tracks a swipe mid-drag instead of only
+  // snapping once the page settles.
+  double get _pageValue {
+    if (_pageController.hasClients && _pageController.position.haveDimensions) {
+      return _pageController.page ?? _currentIndex.toDouble();
+    }
+    return _currentIndex.toDouble();
+  }
+
+  /// [selection] is 1.0 when this tab is fully in view and 0.0 once it is a
+  /// whole page away, so the icon tints and grows continuously while dragging.
   Widget _buildFloatingNavItem({
-    required String iconPath,
+    required IconData icon,
     required int index,
-    required bool isCenter,
+    required double selection,
     required double iconSize,
-    required double centerIconSize,
   }) {
-    final bool isActive = _currentIndex == index;
     return GestureDetector(
-      onTap: () {
-        _onItemTapped(index);
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: isCenter ? iconSize * 0.3 : iconSize * 0.5,
-          vertical: iconSize * 0.3,
-        ),
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.transparent,
-        ),
-        child: SvgPicture.asset(
-          iconPath,
-          width: isCenter ? centerIconSize : iconSize,
-          height: isCenter ? centerIconSize : iconSize,
-          colorFilter: ColorFilter.mode(
-            isActive ? AppColors.primary : Colors.grey.shade600,
-            BlendMode.srcIn,
+      onTap: () => _onItemTapped(index),
+      behavior: HitTestBehavior.opaque,
+      child: Center(
+        child: Icon(
+          icon,
+          size: iconSize * (1 + 0.18 * selection),
+          color: Color.lerp(
+            Colors.grey.shade600,
+            AppColors.primary,
+            selection,
           ),
         ),
       ),
+    );
+  }
+
+  /// Nav bar contents: a pill that slides under the active icon, with the five
+  /// destinations laid out over it.
+  Widget _buildNavBarContent(double iconSize) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double itemWidth = constraints.maxWidth / _navIcons.length;
+        final double pillWidth = itemWidth * 0.74;
+        final double pillHeight = constraints.maxHeight * 0.68;
+
+        return AnimatedBuilder(
+          animation: _pageController,
+          builder: (context, _) {
+            final double page =
+                _pageValue.clamp(0.0, (_navIcons.length - 1).toDouble());
+
+            return Stack(
+              children: [
+                // Sliding pill, driven by the live page value.
+                Positioned(
+                  left: page * itemWidth + (itemWidth - pillWidth) / 2,
+                  top: (constraints.maxHeight - pillHeight) / 2,
+                  width: pillWidth,
+                  height: pillHeight,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.primary.withValues(alpha: 0.20),
+                          AppColors.primaryLight.withValues(alpha: 0.12),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(pillHeight / 2),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.25),
+                      ),
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    for (var i = 0; i < _navIcons.length; i++)
+                      SizedBox(
+                        width: itemWidth,
+                        height: constraints.maxHeight,
+                        child: _buildFloatingNavItem(
+                          icon: _navIcons[i],
+                          index: i,
+                          selection: (1 - (page - i).abs()).clamp(0.0, 1.0),
+                          iconSize: iconSize,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -194,7 +268,6 @@ class _MainBottomNavState extends State<MainBottomNav>
     isTablet ? screenHeight * 0.08 : screenHeight * 0.075;
     final double borderRadius = navBarHeight / 2;
     final double iconSize = screenWidth * 0.055;
-    final double centerIconSize = screenWidth * 0.07;
     final double shadowBlur = screenWidth * 0.03;
 
     return PopScope(
@@ -294,47 +367,7 @@ class _MainBottomNavState extends State<MainBottomNav>
                     child: Padding(
                       padding: EdgeInsets.symmetric(
                           horizontal: screenWidth * 0.05),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          _buildFloatingNavItem(
-                            iconPath: "assets/icons/dashboard.svg",
-                            index: 0,
-                            isCenter: false,
-                            iconSize: iconSize,
-                            centerIconSize: centerIconSize,
-                          ),
-                          _buildFloatingNavItem(
-                            iconPath: "assets/icons/routes.svg",
-                            index: 1,
-                            isCenter: false,
-                            iconSize: iconSize,
-                            centerIconSize: centerIconSize,
-                          ),
-                          _buildFloatingNavItem(
-                            iconPath: "assets/icons/students.svg",
-                            index: 2,
-                            isCenter: false,
-                            iconSize: iconSize,
-                            centerIconSize: centerIconSize,
-                          ),
-                          _buildFloatingNavItem(
-                            iconPath: "assets/icons/attendance.svg",
-                            index: 3,
-                            isCenter: false,
-                            iconSize: iconSize,
-                            centerIconSize: centerIconSize,
-                          ),
-                          _buildFloatingNavItem(
-                            iconPath: "assets/icons/user.svg",
-                            index: 4,
-                            isCenter: false,
-                            iconSize: iconSize,
-                            centerIconSize: centerIconSize,
-                          ),
-                        ],
-                      ),
+                      child: _buildNavBarContent(iconSize),
                     ),
                   ),
                 ),

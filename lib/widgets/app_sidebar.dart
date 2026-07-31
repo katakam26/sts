@@ -11,13 +11,22 @@ class AppSidebar extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     
-    // Teal background color from the image
-    const sidebarColor = Color(0xFF62D2D7);
-
     return Drawer(
       width: screenWidth * 0.75,
-      backgroundColor: sidebarColor,
-      child: SafeArea(
+      backgroundColor: AppColors.primary,
+      child: DecoratedBox(
+        // Brand gradient, replacing the old hardcoded teal.
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primary,
+              AppColors.primaryLight,
+            ],
+          ),
+        ),
+        child: SafeArea(
         child: Column(
           children: [
             // Drawer Header
@@ -30,7 +39,15 @@ class AppSidebar extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: screenWidth * 0.08,
-                    backgroundColor: Colors.blue.shade400, // Placeholder blue for profile
+                    backgroundColor: Colors.white,
+                    child: Text(
+                      'S',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: AppFontSize.h4(context),
+                        fontWeight: AppFontWeight.bold,
+                      ),
+                    ),
                   ),
                   SizedBox(width: screenWidth * 0.04),
                   Column(
@@ -47,7 +64,7 @@ class AppSidebar extends StatelessWidget {
                       Text(
                         'Active Status',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: AppFontSize.text3(context),
                         ),
                       ),
@@ -56,11 +73,21 @@ class AppSidebar extends StatelessWidget {
                 ],
               ),
             ),
-            
+
+            Divider(
+              color: Colors.white.withValues(alpha: 0.25),
+              height: 1,
+              indent: screenWidth * 0.06,
+              endIndent: screenWidth * 0.06,
+            ),
+
             // Drawer Items
             Expanded(
               child: ListView(
-                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.02),
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.02,
+                  vertical: screenHeight * 0.01,
+                ),
                 children: [
                   _buildSidebarItem(
                     context,
@@ -121,6 +148,7 @@ class AppSidebar extends StatelessWidget {
             ),
           ],
         ),
+        ),
       ),
     );
   }
@@ -134,10 +162,17 @@ class AppSidebar extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return ListTile(
-      leading: Icon(
-        icon,
-        color: Colors.white,
-        size: screenWidth * 0.07,
+      leading: Container(
+        padding: EdgeInsets.all(screenWidth * 0.02),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(screenWidth * 0.025),
+        ),
+        child: Icon(
+          icon,
+          color: Colors.white,
+          size: screenWidth * 0.055,
+        ),
       ),
       title: Text(
         title,
