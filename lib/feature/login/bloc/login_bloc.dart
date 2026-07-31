@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import '../../../utils/secure_storage.dart';
 import '../models/login_request.dart';
+import '../models/login_response.dart';
 import '../repository/login_repository.dart';
 import 'login_event.dart';
 import 'login_state.dart';
@@ -8,6 +9,11 @@ import 'login_state.dart';
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
   final LoginRepository _loginRepository;
   final SecureStorageService _secureStorageService;
+
+  // Held in memory only, between sending an OTP and verifying it. Nothing is
+  // persisted until the OTP actually matches, otherwise merely requesting an
+  // OTP would leave the user permanently signed in.
+  LoginResponse? _pendingLogin;
 
   LoginBloc({
     required LoginRepository loginRepository,
@@ -36,8 +42,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       final response = await _loginRepository.login(request);
 
       if (response.code == '200' || response.code == 'success' || response.code == '1') {
-        // Store the user data in secure storage
-        await _secureStorageService.storeLoginResponse(response);
+        // Hold the response until the OTP is verified.
+        _pendingLogin = response;
         emit(OTPSentState(message: response.message.isEmpty ? 'OTP sent successfully' : response.message));
       } else {
         emit(LoginError(message: response.message.isEmpty ? 'Failed to send OTP' : response.message));
@@ -53,11 +59,13 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       ) async {
     emit(LoginLoading());
     try {
-      // Get stored user data
-      final userData = await _secureStorageService.getUserData();
+      // The pending response from the OTP request, not yet persisted.
+      final userData = _pendingLogin;
 
       if (userData != null && userData.otp == event.otp) {
-        // OTP matched, user is fully authenticated
+        // OTP matched: only now does the session become persistent.
+        await _secureStorageService.storeLoginResponse(userData);
+        _pendingLogin = null;
         emit(OTPVerifiedState(loginResponse: userData));
         emit(LoggedInState(userData: userData));
       } else {
@@ -82,7 +90,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       final response = await _loginRepository.login(request);
 
       if (response.code == '200' || response.code == 'success' || response.code == '1') {
-        await _secureStorageService.storeLoginResponse(response);
+        _pendingLogin = response;
         emit(OTPSentState(message: 'OTP resent successfully'));
       } else {
         emit(LoginError(message: response.message.isEmpty ? 'Failed to resend OTP' : response.message));
@@ -97,6 +105,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       Emitter<LoginState> emit,
       ) async {
     try {
+      _pendingLogin = null;
       await _secureStorageService.clearAll();
       emit(LoggedOutState());
     } catch (e) {
